@@ -3,9 +3,15 @@
 /* Make user and settings available for everyone through root scope.
  */
 
-habitrpg.controller("RootCtrl", ['$scope', '$rootScope', '$location', 'User', '$http', '$state', '$stateParams', 'Notification', 'Groups', 'Shared', 'Content',
-  function($scope, $rootScope, $location, User, $http, $state, $stateParams, Notification, Groups, Shared, Content) {
+habitrpg.controller("RootCtrl", ['$scope', '$rootScope', '$location', 'User', '$http', '$state', '$stateParams', 'Notification', 'Groups', 'Shared', 'Content', '$timeout',
+  function($scope, $rootScope, $location, User, $http, $state, $stateParams, Notification, Groups, Shared, Content, $timeout) {
     var user = User.user;
+
+    // GA goal-tracking
+    $timeout(function(){
+      if (document.referrer.indexOf("paypal.com"))
+        ga && ga('send', 'event', 'checkout', 'callback', 'PayPal');
+    });
 
     var initSticky = _.once(function(){
       if (window.env.IS_MOBILE || User.user.preferences.stickyHeader === false) return;
@@ -79,7 +85,13 @@ habitrpg.controller("RootCtrl", ['$scope', '$rootScope', '$location', 'User', '$
       $rootScope.flash[type].splice($index, 1);
     }
 
+    $rootScope.showGemsModal = function(source) {
+      ga && ga('send', 'event', 'button', 'click', 'Gems Modal ('+source+')');
+      $rootScope.modals.buyGems = true;
+    }
+
     $rootScope.showStripe = function(subscription) {
+      ga && ga('send', 'event', 'button', 'click', 'Show Stripe');
       StripeCheckout.open({
         key: window.env.STRIPE_PUB_KEY,
         address: false,
@@ -95,6 +107,7 @@ habitrpg.controller("RootCtrl", ['$scope', '$rootScope', '$location', 'User', '$
 //          if (subscription) url += '?plan=test';
           $scope.$apply(function(){
             $http.post(url, data).success(function() {
+              ga && ga('send', 'event', 'stripe', 'callback', subscription ? 'Subscribe' : 'Buy Gems');
               window.location.reload(true);
             }).error(function(err) {
               alert(err);

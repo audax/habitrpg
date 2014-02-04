@@ -13,7 +13,7 @@ footer.footer(ng-controller='FooterCtrl')
         ul.unstyled
           if (!env.isFrontPage)
             li
-              .btn.btn-small.btn-success(ng-click='modals.buyGems = true')
+              .btn.btn-small.btn-success(ng-click='showGemsModal("Donate")')
                 i.icon-heart.icon-white
                 =env.t('companyDonate')
           li
