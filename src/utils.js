@@ -4,18 +4,13 @@ var crypto = require('crypto');
 var path = require("path");
 
 module.exports.sendEmail = function(mailData) {
-  var smtpTransport = nodemailer.createTransport("SMTP",{
-    service: nconf.get('SMTP_SERVICE'),
-    auth: {
-      user: nconf.get('SMTP_USER'),
-      pass: nconf.get('SMTP_PASS')
-    }
+  var mailTransport = nodemailer.createTransport("sendmail",{
   });
-  smtpTransport.sendMail(mailData, function(error, response){
+  mailTransport.sendMail(mailData, function(error, response){
       var logging = require('./logging');
     if(error) logging.error(error);
     else logging.info("Message sent: " + response.message);
-    smtpTransport.close(); // shut down the connection pool, no more messages
+    mailTransport.close(); // shut down the connection pool, no more messages
   });
 }
 
