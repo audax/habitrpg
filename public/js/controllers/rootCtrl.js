@@ -3,8 +3,8 @@
 /* Make user and settings available for everyone through root scope.
  */
 
-habitrpg.controller("RootCtrl", ['$scope', '$rootScope', '$location', 'User', '$http', '$state', '$stateParams', 'Notification', 'Groups', 'Shared', 'Content',
-  function($scope, $rootScope, $location, User, $http, $state, $stateParams, Notification, Groups, Shared, Content) {
+habitrpg.controller("RootCtrl", ['$scope', '$rootScope', '$location', 'User', '$http', '$state', '$stateParams', 'Notification', 'Groups', 'Shared', 'Content', '$modal', '$timeout',
+  function($scope, $rootScope, $location, User, $http, $state, $stateParams, Notification, Groups, Shared, Content, $modal, $timeout) {
     var user = User.user;
 
     var initSticky = _.once(function(){
@@ -13,8 +13,11 @@ habitrpg.controller("RootCtrl", ['$scope', '$rootScope', '$location', 'User', '$
     })
     $rootScope.$on('userUpdated',initSticky);
 
-    $rootScope.modals = {};
-    $rootScope.modals.achievements = {};
+    $rootScope.$on('$stateChangeSuccess',
+      function(event, toState, toParams, fromState, fromParams){
+        if (!!fromState.name) window.ga && ga('send', 'pageview', {page: '/#/'+toState.name});
+      });
+
     $rootScope.User = User;
     $rootScope.user = user;
     $rootScope.moment = window.moment;
@@ -23,6 +26,7 @@ habitrpg.controller("RootCtrl", ['$scope', '$rootScope', '$location', 'User', '$
     $rootScope.Shared = Shared;
     $rootScope.Content = Content;
     $rootScope.env = window.env;
+    $rootScope.Math = Math;
 
     // Angular UI Router
     $rootScope.$state = $state;
@@ -66,8 +70,21 @@ habitrpg.controller("RootCtrl", ['$scope', '$rootScope', '$location', 'User', '$
     $rootScope.set = User.set;
     $rootScope.authenticated = User.authenticated;
 
+    // Open a modal from a template expression (like ng-click,...)
+    // Otherwise use the proper $modal.open
+    $rootScope.openModal = function(template, options){//controller, scope, keyboard, backdrop){
+      if (!options) options = {};
+      if (options.track) window.ga && ga('send', 'event', 'button', 'click', options.track);
+      return $modal.open({
+        templateUrl: 'modals/' + template + '.html',
+        controller: options.controller, // optional
+        scope: options.scope, // optional
+        keyboard: (options.keyboard === undefined ? true : options.keyboard), // optional
+        backdrop: (options.backdrop === undefined ? true : options.backdrop) // optional
+      });
+    }
+
     $rootScope.dismissAlert = function() {
-      $rootScope.modals.newStuff = false;
       $rootScope.set({'flags.newStuff':false});
     }
 
@@ -77,6 +94,24 @@ habitrpg.controller("RootCtrl", ['$scope', '$rootScope', '$location', 'User', '$
 
     $rootScope.dismissErrorOrWarning = function(type, $index){
       $rootScope.flash[type].splice($index, 1);
+    }
+
+    $rootScope.initPayPalButton = function($event){
+      //debugger
+      var data = {
+        name:env.t('paypalText'),
+        //env:window.env.NODE_ENV == 'production' ? '' : 'sandbox',
+        quantity:1,
+        amount:5,
+        currency:'USD',
+        tax:0,
+        callback:window.env.BASE_URL + '/api/v2/user/buy-gems/paypal-ipn',
+        custom:'?uid='+User.user._id + '&apiToken=' + User.user.apiToken,
+        'return':window.env.BASE_URL,
+        rm:1,
+        no_shipping:1
+      };
+      PAYPAL.apps.ButtonFactory.create(window.env.PAYPAL_MERCHANT, data, 'buynow', document.getElementById('custom-paypal-button'));
     }
 
     $rootScope.showStripe = function(subscription) {
@@ -164,6 +199,11 @@ habitrpg.controller("RootCtrl", ['$scope', '$rootScope', '$location', 'User', '$
     */
     $scope.castStart = function(spell) {
       if (User.user.stats.mp < spell.mana) return Notification.text(window.env.t('notEnoughMana'));
+
+      // Temporary for valentine's day, remove after event
+      if (spell.key == 'valentine' && User.user.stats.gp < spell.value)
+        return Notification.text('Not enough gold.');
+
       $rootScope.applyingAction = true;
       $scope.spell = spell;
       if (spell.target == 'self') {

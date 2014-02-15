@@ -19,7 +19,7 @@ angular.module('guideServices', []).
         {
           element: ".main-herobox",
           title: window.env.t('welcomeHabit'),
-          content: window.env.t('welcomeHabitT1') + "<a href='http://www.kickstarter.com/profile/1823740484' target='_blank'>Justin</a>," + window.env.t('welcomeHabitT2'),
+          content: window.env.t('welcomeHabitT1') + " <a href='http://www.kickstarter.com/profile/1823740484' target='_blank'>Justin</a>, " + window.env.t('welcomeHabitT2'),
         }, {
           element: ".main-herobox",
           title: window.env.t('yourAvatar'),
@@ -69,7 +69,7 @@ angular.module('guideServices', []).
         }, {
           element: "ul.habits li:first-child",
           title: window.env.t('unlockFeatures'),
-          content: window.env.t('unlockFeaturesT1') + "<a href='http://habitrpg.wikia.com' target='_blank'>" + window.env.t('habitWiki') + "</a>" + window.env.t('unlockFeaturesT2'),
+          content: window.env.t('unlockFeaturesT1') + " <a href='http://habitrpg.wikia.com' target='_blank'>" + window.env.t('habitWiki') + "</a> " + window.env.t('unlockFeaturesT2'),
           placement: "right"
         }
       ];
@@ -130,20 +130,12 @@ angular.module('guideServices', []).
       if (!eggs) {
         eggs['Wolf'] = 1; // This is also set on the server
       }
-      $rootScope.modals.dropsEnabled = true;
-    });
-
-    $rootScope.$watch('user.items.pets', function(after, before) {
-      if (User.user.achievements && User.user.achievements.beastMaster) return;
-      if (before >= 90) {
-        User.set({'achievements.beastMaster': true});
-        $('#beastmaster-achievement-modal').modal('show'); // FIXME
-      }
+      $rootScope.openModal('dropsEnabled');
     });
 
     $rootScope.$watch('user.flags.rebirthEnabled', function(after, before) {
         if (alreadyShown(before, after)) return;
-        $rootScope.modals.rebirthEnabled = true;
+        $rootScope.openModal('rebirthEnabled');
     });
 
 
@@ -179,11 +171,11 @@ angular.module('guideServices', []).
         }, {
           element: ".meter.mana",
           title: window.env.t('spells'),
-          content: window.env.t('spellsText') + "<a target='_blank' href='http://habitrpg.wikia.com/wiki/Todos'>" + window.env.t('toDo') + "</a>."
+          content: window.env.t('spellsText') + " <a target='_blank' href='http://habitrpg.wikia.com/wiki/Todos'>" + window.env.t('toDo') + "</a>."
         }, {
           orphan: true,
           title: window.env.t('readMore'),
-          content: window.env.t('moreClass') + "<a href='http://habitrpg.wikia.com/wiki/Class_System' target='_blank'>Wikia</a>."
+          content: window.env.t('moreClass') + " <a href='http://habitrpg.wikia.com/wiki/Class_System' target='_blank'>Wikia</a>."
         }
       ];
       _.each(tourSteps, function(step){

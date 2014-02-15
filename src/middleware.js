@@ -122,22 +122,21 @@ var getManifestFiles = function(page){
 
   if(!files) throw new Error("Page not found!");
 
-  var css = '';
-
-  _.each(files.css, function(file){
-    css += '<link rel="stylesheet" type="text/css" href="' + getBuildUrl(file) + '">';
-  });
+  var code = '';
 
   if(nconf.get('NODE_ENV') === 'production'){
-    return css + '<script type="text/javascript" src="' + getBuildUrl(page + '.js') + '"></script>';
+    code += '<link rel="stylesheet" type="text/css" href="' + getBuildUrl(page + '.css') + '">';
+    code += '<script type="text/javascript" src="' + getBuildUrl(page + '.js') + '"></script>';
   }else{
-    var results = css;
-    _.each(files.js, function(file){
-      results += '<script type="text/javascript" src="' + getBuildUrl(file) + '"></script>';
+    _.each(files.css, function(file){
+      code += '<link rel="stylesheet" type="text/css" href="' + getBuildUrl(file) + '">';
     });
-    return results;
+    _.each(files.js, function(file){
+      code += '<script type="text/javascript" src="' + getBuildUrl(file) + '"></script>';
+    });
   }
-
+  
+  return code;
 }
 
 // Translations
@@ -197,7 +196,6 @@ var getUserLanguage = function(req, callback){
     var acceptable = _(req.acceptedLanguages).map(function(lang){
       return lang.slice(0, 2);
     }).uniq().value();
-
     var matches = _.intersection(acceptable, langCodes);
     return matches.length > 0 ? matches[0] : 'en';
   };
@@ -209,10 +207,13 @@ var getUserLanguage = function(req, callback){
         return callback(null, _.find(avalaibleLanguages, {code: user.preferences.language}));
       }else{
         var langCode = getFromBrowser();
-        if(user && translations[langCode]){
-          user.preferences.language = langCode;
-          user.save(); //callback?
-        }
+        // Because english is usually always avalaible as an acceptable language for the browser,
+        // if the user visit the page when his own language is not avalaible yet
+        // he'll have english set in his preferences, which is not good. 
+        //if(user && translations[langCode]){
+          //user.preferences.language = langCode;
+          //user.save(); //callback?
+        //}
         return callback(null, _.find(avalaibleLanguages, {code: langCode}))
       }
     });
@@ -226,7 +227,6 @@ module.exports.locals = function(req, res, next) {
     if(err) return res.json(500, {err: err});
 
     var isStaticPage = req.url.split('/')[1] === 'static'; // If url contains '/static/'
-    //console.log(isStaticPage)
 
     // Load moment.js language file only when not on static pages
     language.momentLang = ((!isStaticPage && momentLangs[language.code])|| undefined);
@@ -235,6 +235,7 @@ module.exports.locals = function(req, res, next) {
       NODE_ENV: nconf.get('NODE_ENV'),
       BASE_URL: nconf.get('BASE_URL'),
       PAYPAL_MERCHANT: nconf.get('PAYPAL_MERCHANT'),
+      GA_ID: nconf.get("GA_ID"),
       IS_MOBILE: /Android|webOS|iPhone|iPad|iPod|BlackBerry/i.test(req.header('User-Agent')),
       STRIPE_PUB_KEY: nconf.get('STRIPE_PUB_KEY'),
       getManifestFiles: getManifestFiles,

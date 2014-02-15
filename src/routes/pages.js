@@ -37,6 +37,10 @@ router.get('/static/about', middleware.locals, function(req, res) {
   res.render('static/about', {env: res.locals.habitrpg});
 });
 
+router.get('/static/videos', middleware.locals, function(req, res) {
+  res.render('static/videos', {env: res.locals.habitrpg});
+});
+
 router.get('/static/contact', middleware.locals, function(req, res) {
   res.render('static/contact', {env: res.locals.habitrpg});
 });

@@ -114,8 +114,12 @@ window.habitrpg = angular.module('habitrpg',
         .state('options.social.guilds.detail', {
           url: '/:gid',
           templateUrl: 'partials/options.social.guilds.detail.html',
-          controller: ['$scope', 'Groups', '$stateParams', function($scope, Groups, $stateParams){
-            $scope.group = Groups.Group.get({gid:$stateParams.gid});
+          controller: ['$scope', 'Groups', '$stateParams',
+          function($scope, Groups, $stateParams){
+            Groups.Group.get({gid:$stateParams.gid}, function(group){
+              $scope.group = group;
+              Groups.seenMessage(group._id);
+            });
           }]
         })
 
@@ -223,7 +227,7 @@ window.habitrpg = angular.module('habitrpg',
           // Error
           } else {
             var error = '<strong>Please reload</strong>, ' +
-              '"'+window.env.t('error')+' '+(response.data.err || response.data || 'something went wrong')+'"' +
+              '"'+window.env.t('error')+' '+(response.data.err || response.data || 'something went wrong')+'" ' +
               window.env.t('seeConsole');
             $rootScope.$broadcast('responseError', error);
             console.error(response);

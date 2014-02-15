@@ -1,9 +1,13 @@
 'use strict';
 
 habitrpg.controller('NotificationCtrl',
-  ['$scope', '$rootScope', 'Shared', 'User', 'Guide', 'Notification', function ($scope, $rootScope, Shared, User, Guide, Notification) {
+  ['$scope', '$rootScope', 'Shared', 'User', 'Guide', 'Notification',
+  function ($scope, $rootScope, Shared, User, Guide, Notification) {
 
     $rootScope.$watch('user.stats.hp', function(after, before) {
+      if (after <= 0){
+        $rootScope.openModal('death', {keyboard:false, backdrop:'static'});
+      }
       if (after == before) return;
       if (User.user.stats.lvl == 0) return;
       Notification.hp(after - before, 'hp');
@@ -26,7 +30,7 @@ habitrpg.controller('NotificationCtrl',
 
       if ((money > 0) && !!bonus) {
         if (bonus < 0.01) bonus = 0.01;
-        Notification.text("+ " + Notification.coins(bonus) + window.env.t('streakCoins'));
+        Notification.text("+ " + Notification.coins(bonus) + ' ' + window.env.t('streakCoins'));
         delete User.user._tmp.streakBonus;
       }
     });
@@ -61,31 +65,35 @@ habitrpg.controller('NotificationCtrl',
 
     $rootScope.$watch('user.achievements.streak', function(after, before){
       if(before == undefined || after == before || after < before) return;
-      $rootScope.modals.achievements.streak = true;
+      $rootScope.openModal('achievements/streak');
     });
 
     $rootScope.$watch('user.achievements.ultimateGear', function(after, before){
       if (after === before || after !== true) return;
-      $rootScope.modals.achievements.ultimateGear = true;
+      $rootScope.openModal('achievements/ultimateGear');
     });
 
     $rootScope.$watch('user.items.pets', function(after, before){
       if(_.size(after) === _.size(before) || 
         Shared.countPets(null, after) < 90) return;
       User.user.achievements.beastMaster = true;
-      $rootScope.modals.achievements.beastMaster = true;
+      $rootScope.openModal('achievements/beastMaster');
     }, true);
 
     $rootScope.$watch('user.achievements.rebirths', function(after, before){
       if(after === before) return;
-      $rootScope.modals.achievements.rebirth = true;
+      $rootScope.openModal('achievements/rebirth');
+    });
+
+    $rootScope.$watch('user.flags.contributor', function(after, before){
+      if (after === before || after !== true) return;
+      $rootScope.openModal('achievements/contributor');
     });
 
     /*_.each(['weapon', 'head', 'chest', 'shield'], function(watched){
       $rootScope.$watch('user.items.' + watched, function(before, after){
         if (after == before) return;
         if (+after < +before) {
-          Notification.death();
           //don't want to day "lost a head"
           if (watched === 'head') watched = 'helm';
           Notification.text('Lost GP, 1 LVL, ' + watched);
@@ -93,11 +101,30 @@ habitrpg.controller('NotificationCtrl',
       })
     });*/
 
+    // Classes modal
+    $rootScope.$watch('!user.flags.classSelected && user.stats.lvl >= 10', function(after, before){
+      if(after){
+        $rootScope.openModal('chooseClass', {controller:'UserCtrl', keyboard:false, backdrop:'static'});
+      }
+    });
+
     $rootScope.$watch('user.stats.lvl', function(after, before) {
       if (after == before) return;
       if (after > before) {
         Notification.lvl();
       }
+    });
+
+    // Completed quest modal
+    $rootScope.$watch('user.party.quest.completed', function(after, before){
+      if (after == before || after != true) return;
+      $rootScope.openModal('questCompleted', {controller:'InventoryCtrl'});
+    });
+
+    // Quest invitation modal
+    $rootScope.$watch('party.quest.key && !party.quest.active && party.quest.members[user._id] == undefined', function(after, before){
+      if (after == before || after != true) return;
+      $rootScope.openModal('questInvitation');
     });
 
     $rootScope.$on('responseError', function(ev, error){
