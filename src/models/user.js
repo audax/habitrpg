@@ -89,6 +89,7 @@ var UserSchema = new Schema({
       paymentMethod: String, //enum: ['Paypal','Stripe', '']}
       customerId: String,
       dateCreated: Date,
+      dateTerminated: Date,
       dateUpdated: Date,
       gemsBought: {type: Number, 'default': 0},
       mysteryItems: {type: Array, 'default': []}
@@ -107,7 +108,9 @@ var UserSchema = new Schema({
     classSelected: {type: Boolean, 'default': false},
     mathUpdates: Boolean,
     rebirthEnabled: {type: Boolean, 'default': false},
-    levelDrops: {type:Schema.Types.Mixed, 'default':{}}
+    freeRebirth: {type: Boolean, 'default': false},
+    levelDrops: {type:Schema.Types.Mixed, 'default':{}},
+    chatRevoked: Boolean
   },
   history: {
     exp: Array, // [{date: Date, value: Number}], // big peformance issues if these are defined
@@ -304,14 +307,14 @@ var UserSchema = new Schema({
     id: { type: String, 'default': shared.uuid },
     name: String,
     challenge: String
-  }], 'default': shared.content.userDefaults.tags},
+  }]},
 
   challenges: [{type: 'String', ref:'Challenge'}],
 
-  habits:   {type:[TaskSchemas.HabitSchema], 'default': shared.content.userDefaults.habits},
-  dailys:   {type:[TaskSchemas.DailySchema], 'default': shared.content.userDefaults.dailys},
-  todos:    {type:[TaskSchemas.TodoSchema], 'default': shared.content.userDefaults.todos},
-  rewards:  {type:[TaskSchemas.RewardSchema], 'default': shared.content.userDefaults.rewards},
+  habits:   {type:[TaskSchemas.HabitSchema]},
+  dailys:   {type:[TaskSchemas.DailySchema]},
+  todos:    {type:[TaskSchemas.TodoSchema]},
+  rewards:  {type:[TaskSchemas.RewardSchema]},
 
   extra: Schema.Types.Mixed
 
@@ -346,6 +349,38 @@ UserSchema.post('init', function(doc){
 })
 
 UserSchema.pre('save', function(next) {
+
+  // Populate new users with default content
+  if (this.isNew){
+    //TODO for some reason this doesn't work here: `_.merge(this, shared.content.userDefaults);`
+    var self = this;
+    _.each(['habits', 'dailys', 'todos', 'rewards', 'tags'], function(taskType){
+      self[taskType] = _.map(shared.content.userDefaults[taskType], function(task){
+        var newTask = _.cloneDeep(task);
+
+        // Render task's text and notes in user's language
+        if(taskType === 'tags'){
+          // tasks automatically get id=helpers.uuid() from TaskSchema id.default, but tags are Schema.Types.Mixed - so we need to manually invoke here
+          newTask.id = shared.uuid();
+          newTask.name = newTask.name(self.preferences.language);
+        }else{
+          newTask.text = newTask.text(self.preferences.language);
+          newTask.notes = newTask.notes(self.preferences.language);
+
+          if(newTask.checklist){
+            newTask.checklist = _.map(newTask.checklist, function(checklistItem){
+              checklistItem.text = checklistItem.text(self.preferences.language);
+              return checklistItem;
+            });
+          }
+        }
+
+        return newTask;
+      });
+    });
+
+    this.preferences.language = undefined;
+  }
 
   //this.markModified('tasks');
   if (_.isNaN(this.preferences.dayStart) || this.preferences.dayStart < 0 || this.preferences.dayStart > 23) {

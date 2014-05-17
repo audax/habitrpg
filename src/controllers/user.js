@@ -6,9 +6,6 @@ var _ = require('lodash');
 var nconf = require('nconf');
 var async = require('async');
 var shared = require('habitrpg-shared');
-var validator = require('validator');
-var check = validator.check;
-var sanitize = validator.sanitize;
 var User = require('./../models/user').model;
 var ga = require('./../utils').ga;
 var Group = require('./../models/group').model;
@@ -16,21 +13,20 @@ var Challenge = require('./../models/challenge').model;
 var logging = require('./../logging');
 var acceptablePUTPaths;
 var api = module.exports;
-var isProduction = nconf.get("NODE_ENV") === "production";
-
-var PaypalRecurring = require('paypal-recurring');
-var paypalRecurring = new PaypalRecurring({
-  username:  nconf.get('PAYPAL_USERNAME'),
-  password:  nconf.get('PAYPAL_PASSWORD'),
-  signature: nconf.get('PAYPAL_SIGNATURE')
-}, isProduction ? "production" : "sandbox");
-var paypalCheckout = require('paypal-express-checkout')
-  .init(nconf.get('PAYPAL_USERNAME'), nconf.get('PAYPAL_PASSWORD'), nconf.get('PAYPAL_SIGNATURE'), nconf.get('BASE_URL'), nconf.get('BASE_URL'), !isProduction);
 
 // api.purchase // Shared.ops
 
 api.getContent = function(req, res, next) {
-  res.json(shared.content);
+  var language = req.query.language; //|| 'en' in i18n
+  var content = _.cloneDeep(shared.content);
+  var walk = function(obj){
+    _.each(obj, function(item, key, source){
+      if(_.isPlainObject(item) || _.isArray(item)) return walk(item);
+      if(_.isFunction(item) && item.i18nLangFunc) source[key] = item(language);
+    });
+  }
+  walk(content);
+  res.json(content);
 }
 
 /*
@@ -89,7 +85,7 @@ api.score = function(req, res, next) {
     if (task.type === 'daily' || task.type === 'todo')
       task.completed = direction === 'up';
   }
-  var delta = user.ops.score({params:{id:task.id, direction:direction}});
+  var delta = user.ops.score({params:{id:task.id, direction:direction}, language: req.language});
 
   user.save(function(err,saved){
     if (err) return next(err);
@@ -349,7 +345,7 @@ api.cast = function(req, res, next) {
 
           if (group) {
             series.push(function(cb2){
-              var message = '`'+user.profile.name+' casts '+spell.text + (targetType=='user' ? ' on '+found.profile.name : ' for the party')+'.`';
+              var message = '`'+user.profile.name+' casts '+spell.text() + (targetType=='user' ? ' on '+found.profile.name : ' for the party')+'.`';
               group.sendChat(message);
               group.save(cb2);
             })
@@ -410,6 +406,8 @@ api.batchUpdate = function(req, res, next) {
   res.locals.ops = [];
   var ops = _.transform(req.body, function(m,_req){
     if (_.isEmpty(_req)) return;
+    _req.language = req.language;
+
     m.push(function() {
       var cb = arguments[arguments.length-1];
       res.locals.ops.push(_req);

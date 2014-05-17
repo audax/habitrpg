@@ -1,7 +1,5 @@
 var _ = require('lodash');
 var validator = require('validator');
-var check = validator.check;
-var sanitize = validator.sanitize;
 var passport = require('passport');
 var shared = require('habitrpg-shared');
 var async = require('async');
@@ -9,6 +7,7 @@ var utils = require('../utils');
 var nconf = require('nconf');
 var User = require('../models/user').model;
 var ga = require('./../utils').ga;
+var i18n = require('./../i18n');
 
 var api = module.exports;
 
@@ -61,10 +60,8 @@ api.registerUser = function(req, res, next) {
   if (password !== confirmPassword) {
     return res.json(401, {err: ":password and :confirmPassword don't match"});
   }
-  try {
-    validator.check(email).isEmail();
-  } catch (err) {
-    return res.json(401, {err: err.message});
+  if (!validator.isEmail(email)) {
+    return res.json(401, {err: ":email invalid"});
   }
   async.waterfall([
     function(cb) {
@@ -92,6 +89,8 @@ api.registerUser = function(req, res, next) {
           timestamps: {created: +new Date(), loggedIn: +new Date()}
         }
       };
+      newUser.preferences = newUser.preferences || {};
+      newUser.preferences.language = req.language; // User language detected from browser, not saved
       user = new User(newUser);
 
       // temporary for conventions
@@ -225,7 +224,7 @@ api.changePassword = function(req, res, next) {
 
 api.setupPassport = function(router) {
 
-  router.get('/logout', function(req, res) {
+  router.get('/logout', i18n.getUserLanguage, function(req, res) {
     req.logout();
     delete req.session.userId;
     res.redirect('/');
@@ -238,6 +237,7 @@ api.setupPassport = function(router) {
   //   redirect the user back to this application at /auth/facebook/callback
   router.get('/auth/facebook',
     passport.authenticate('facebook'),
+    i18n.getUserLanguage,
     function(req, res){
       // The request will be redirected to Facebook for authentication, so this
       // function will not be called.
@@ -250,6 +250,7 @@ api.setupPassport = function(router) {
   //   which, in this example, will redirect the user to the home page.
   router.get('/auth/facebook/callback',
     passport.authenticate('facebook', { failureRedirect: '/login' }),
+    i18n.getUserLanguage,
     function(req, res) {
       //res.redirect('/');
 
@@ -259,7 +260,11 @@ api.setupPassport = function(router) {
         },
         function(user, cb){
           if (user) return cb(null, user);
+
           user = new User({
+            preferences: {
+              language: req.language // User language detected from browser, not saved
+            },
             auth: {
               facebook: req.user,
               timestamps: {created: +new Date(), loggedIn: +new Date()}

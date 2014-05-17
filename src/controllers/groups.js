@@ -217,6 +217,7 @@ api.getChat = function(req, res, next) {
 api.postChat = function(req, res, next) {
   var user = res.locals.user
   var group = res.locals.group;
+  if (group.type!='party' && user.flags.chatRevoked) return res.json(401,{err:'Your chat privileges have been revoked.'});
   var lastClientMsg = req.query.previousMsg;
   var chatUpdated = (lastClientMsg && group.chat && group.chat[0] && group.chat[0].id !== lastClientMsg) ? true : false;
 
@@ -254,9 +255,12 @@ api.deleteChatMessage = function(req, res, next){
 
 api.seenMessage = function(req,res,next){
   // Skip the auth step, we want this to be fast. If !found with uuid/token, then it just doesn't save
-  var update = {$set:{}};
-  update['$set']['newMessages.'+req.params.gid+'.value'] = false;
-  User.update({_id:req.headers['x-api-user'], apiToken:req.headers['x-api-key']},update).exec();
+  // Check for req.params.gid to exist
+  if(req.params.gid){
+    var update = {$set:{}};
+    update['$set']['newMessages.'+req.params.gid+'.value'] = false;
+    User.update({_id:req.headers['x-api-user'], apiToken:req.headers['x-api-key']},update).exec();
+  }
   res.send(200);
 }
 
@@ -485,8 +489,11 @@ api.removeMember = function(req, res, next){
 
 questStart = function(req, res, next) {
   var group = res.locals.group;
-  var user = res.locals.user;
   var force = req.query.force;
+
+//  if (group.quest.active) return res.json(400,{err:'Quest already began.'});
+  // temporarily send error email, until we know more about this issue (then remove below, uncomment above).
+  if (group.quest.active) return next('Quest already began.');
 
   group.markModified('quest');
 
@@ -513,7 +520,7 @@ questStart = function(req, res, next) {
     if (group.quest.members[m] == true) {
       // See https://github.com/HabitRPG/habitrpg/issues/2168#issuecomment-31556322 , we need to *not* reset party.quest.progress.up
       //updates['$set']['party.quest'] = Group.cleanQuestProgress({key:key,progress:{collect:collected}});
-      updates['$set']['party.quest.key'] = key
+      updates['$set']['party.quest.key'] = key;
       updates['$set']['party.quest.progress.down'] = 0;
       updates['$set']['party.quest.progress.collect'] = collected;
       updates['$set']['party.quest.completed'] = null;

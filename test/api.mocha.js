@@ -27,6 +27,7 @@ var Challenge = require('../src/models/challenge').model;
 
 var app = require('../src/server');
 var shared = require('habitrpg-shared');
+var payments = require('../src/controllers/payments');
 
 // ###### Helpers & Variables ######
 var model, uuid, taskPath,
@@ -118,6 +119,7 @@ describe('API', function () {
       });
     });
 
+
     describe('Todos', function(){
       it('Archives old todos',function(done){
         request.post(baseURL + "/user/batch-update?_v=999")
@@ -129,7 +131,7 @@ describe('API', function () {
         .end(function (res) {
 
           expectCode(res, 200);
-          expect(_.size(res.body.todos)).to.be(4);
+          expect(_.size(res.body.todos)).to.be(6);
           request.post(baseURL + "/user/batch-update?_v=998")
           .send([
             {op:'score',params:{direction:'up', id:res.body.todos[0].id}},
@@ -138,14 +140,14 @@ describe('API', function () {
           ])
           .end(function(res){
             expectCode(res, 200);
-            expect(_.size(res.body.todos)).to.be(4);
+            expect(_.size(res.body.todos)).to.be(6);
             request.post(baseURL + "/user/batch-update?_v=997")
             .send([
               {op:'updateTask',params:{id:res.body.todos[0].id}, body:{dateCompleted:moment().subtract('days',4)}},
               {op:'updateTask',params:{id:res.body.todos[1].id}, body:{dateCompleted:moment().subtract('days',4)}}
             ])
             .end(function(res){
-              expect(_.size(res.body.todos)).to.be(2);
+              expect(_.size(res.body.todos)).to.be(4);
               done();
             })
           })
@@ -245,7 +247,7 @@ describe('API', function () {
             request.post(baseURL + "/user/tasks/" + u.todos[1].id + "/up").end(function (res) {
               request.post(baseURL + "/user/tasks/").send({type:'todo'}).end(function (res) {
                 request.post(baseURL + "/user/tasks/clear-completed").end(function (res) {
-                  expect(_.size(res.body)).to.be(2);
+                  expect(_.size(res.body)).to.be(3);
                   done();
                 });
               });
@@ -506,8 +508,7 @@ describe('API', function () {
                   ],done);
 
 
-                  // You see all these freaking })s? This is why I prefer coffeescript!! I keep hitting stupid errors
-                  // where they're mis-matched and I'm counting )'s on my fingers for 10m just to fix them. Gaahhh..
+                  // See all these })s? This is why CoffeeScript is better.
                   //})
                 })
               })
@@ -517,5 +518,41 @@ describe('API', function () {
       });
 
     });
+
+    describe('Subscriptions', function(){
+      var user;
+      before(function(done){
+        User.findOne({_id: _id}, function (err, _user) {
+          expect(err).to.not.be.ok();
+          user = _user;
+          done();
+        });
+      })
+    })
+
+    it('Handles unsubscription', function(done){
+      var cron = function(){
+        user.lastCron = moment().subtract('d',1);
+        user.fns.cron();
+      }
+      expect(user.purchased.plan.customerId).to.not.be.ok();
+      payments.createSubscription(user,{customerId:'123',paymentMethod:'Stripe'});
+      expect(user.purchased.plan.customerId).to.be.ok();
+      shared.wrap(user);
+      cron();
+      expect(user.purchased.plan.customerId).to.be.ok();
+      payments.cancelSubscription(user);
+      cron();
+      expect(user.purchased.plan.customerId).to.be.ok();
+      expect(user.purchased.plan.dateTerminated).to.be.ok();
+      user.purchased.plan.dateTerminated = moment().subtract('d',2);
+      cron();
+      expect(user.purchased.plan.customerId).to.not.be.ok();
+      payments.createSubscription(user,{customerId:'123',paymentMethod:'Stripe'});
+      expect(user.purchased.plan.dateTerminated).to.not.be.ok();
+      done();
+    })
+
+
   });
 });

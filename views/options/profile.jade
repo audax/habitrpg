@@ -2,18 +2,22 @@ mixin twoGem
   small.cost
     | 2 <span class="Pet_Currency_Gem1x inline-gems"></span> /
     = ' ' + env.t('locked')
+    block
 
-script(id='partials/options.profile.avatar.html', type='text/ng-template')
-  .row
+
+// Make it a mixin so we can call it from mobile
+mixin customizeProfile(mobile)
+  div(class=mobile ? 'padding' : 'row')
     .col-md-4
-      h3=env.t('bodyBody')
-
-      h5=env.t('bodySize')
-      .btn-group
-        button.btn.btn-sm.btn-default(ng-class='{active: user.preferences.size=="slim"}', ng-click='set({"preferences.size":"slim"})')=env.t('bodySlim')
-        button.btn.btn-sm.btn-default(ng-class='{active: user.preferences.size=="broad"}', ng-click='set({"preferences.size":"broad"})')=env.t('bodyBroad')
+      h3(class=mobile?'item item-divider':'')=env.t('bodyBody')
 
       menu(type='list')
+        li.customize-menu
+          menu(label=env.t('bodySize'))
+          .btn-group.button-bar
+            button.button.btn.btn-sm.btn-default(ng-class='{active: user.preferences.size=="slim"}', ng-click='set({"preferences.size":"slim"})')=env.t('bodySlim')
+            button.button.btn.btn-sm.btn-default(ng-class='{active: user.preferences.size=="broad"}', ng-click='set({"preferences.size":"broad"})')=env.t('bodyBroad')
+
         li.customize-menu
           menu(label=env.t('shirts'))
             each shirt in ['black', 'blue', 'green', 'pink', 'white', 'yellow']
@@ -21,14 +25,13 @@ script(id='partials/options.profile.avatar.html', type='text/ng-template')
 
           menu(label=env.t('specialShirts'))
             +twoGem()
+              button.btn.btn-xs(ng-hide="user.purchased.shirt.convict && user.purchased.shirt.cross && user.purchased.shirt.fire && user.purchased.shirt.horizon && user.purchased.shirt.ocean && user.purchased.shirt.purple && user.purchased.shirt.rainbow && user.purchased.shirt.redblue && user.purchased.shirt.thunder && user.purchased.shirt.tropical && user.purchased.shirt.zombie", ng-click='unlock("shirt.convict,shirt.cross,shirt.fire,shirt.horizon,shirt.ocean,shirt.purple,shirt.rainbow,shirt.redblue,shirt.thunder,shirt.tropical,shirt.zombie")')!= env.t('unlockSet5') + ' <span class="Pet_Currency_Gem1x inline-gems"/>'
             each shirt in ['convict', 'cross', 'fire', 'horizon', 'ocean', 'purple', 'rainbow', 'redblue', 'thunder', 'tropical', 'zombie']
               button.customize-option(type='button', class='{{user.preferences.size}}_shirt_'+shirt, ng-class='{locked: !user.purchased.shirt.'+shirt+'}', ng-click='unlock("shirt.'+shirt+'")')
-          menu
-            button.btn.btn-sm.btn-primary(ng-hide="user.purchased.shirt.convict && user.purchased.shirt.cross && user.purchased.shirt.fire && user.purchased.shirt.horizon && user.purchased.shirt.ocean && user.purchased.shirt.purple && user.purchased.shirt.rainbow && user.purchased.shirt.redblue && user.purchased.shirt.thunder && user.purchased.shirt.tropical && user.purchased.shirt.zombie", ng-click='unlock("shirt.convict,shirt.cross,shirt.fire,shirt.horizon,shirt.ocean,shirt.purple,shirt.rainbow,shirt.redblue,shirt.thunder,shirt.tropical,shirt.zombie")')!= env.t('unlockSet5') + ' <span class="Pet_Currency_Gem1x inline-gems"/>'
 
 
     .col-md-4
-        h3=env.t('bodyHead')
+        h3(class=mobile?'item item-divider':'')=env.t('bodyHead')
         menu(type='list')
           // For special events code, see commit dfa27b3
 
@@ -39,9 +42,9 @@ script(id='partials/options.profile.avatar.html', type='text/ng-template')
                 .label.label-info.pull-right.hint(popover=limited, popover-title=env.t('limitedEdition'), popover-placement='right', popover-trigger='mouseenter')=env.t('limitedEdition')
               menu(label=title)
                 +twoGem()
+                  button.btn.btn-xs(ng-hide='user.purchased.hair.color.#{colors.join(" && user.purchased.hair.color.")}', ng-click='unlock("hair.color.#{colors.join(",hair.color.")}")')!= env.t('unlockSet5') + ' <span class="Pet_Currency_Gem1x inline-gems"/>'
                 each color in colors
                   button(type='button', ng-class='{locked: !user.purchased.hair.color.#{color}}', class='customize-option hair hair_bangs_1_#{color}', ng-click='unlock("hair.color.#{color}")')
-            button.btn.btn-sm.btn-primary(ng-hide='user.purchased.hair.color.#{colors.join(" && user.purchased.hair.color.")}', ng-click='unlock("hair.color.#{colors.join(",hair.color.")}")')!= env.t('unlockSet5') + ' <span class="Pet_Currency_Gem1x inline-gems"/>'
 
           li.customize-menu
             menu(label=env.t('color'))
@@ -49,57 +52,56 @@ script(id='partials/options.profile.avatar.html', type='text/ng-template')
                 button(type='button', class='customize-option hair', style='background-color:##{k};', ng-click='set({"preferences.hair.color": "#{v}"})')
               each color in ['candycane','frost','winternight','holly']
                 button(type='button', ng-if='user.purchased.hair.color.#{color}', class='customize-option hair hair_bangs_1_#{color}', style='width: 40px; height: 40px;', ng-click='unlock("hair.color.#{color}")')
+              each color in ['pblue','pgreen','porange','ppink','ppurple','pyellow']
+                button(type='button', ng-if='user.purchased.hair.color.#{color}', class='customize-option hair hair_bangs_1_#{color}', ng-click='unlock("hair.color.#{color}")')
           +colorSelection(['rainbow','yellow','green','purple','blue','TRUred'],env.t('rainbowColors'))
-          +colorSelection(['pblue','pgreen','porange','ppink','ppurple','pyellow'],"Pastel Hair",env.t('limited30Apr'))
 
-          h5=env.t('bodyHair')
-          // Bangs
           li.customize-menu
+            h5=env.t('bodyHair')
+
+            // Bangs
             menu(label=env.t('hairBangs'))
               button(class='head_0 customize-option', type='button', ng-click='set({"preferences.hair.bangs":0})')
               each num in [1,2,3]
                 button(class='hair_bangs_#{num}_{{user.preferences.hair.color}} customize-option', type='button', ng-click='set({"preferences.hair.bangs":#{num}})')
 
-          // Base
-          li.customize-menu
+            // Base
             menu(label=env.t('hairBase'))
+              +twoGem()
+                button.btn.btn-xs(ng-hide='user.purchased.hair.base.2 && user.purchased.hair.base.4 && user.purchased.hair.base.5 && user.purchased.hair.base.6 && user.purchased.hair.base.7 && user.purchased.hair.base.8', ng-click='unlock("hair.base.2,hair.base.4,hair.base.5,hair.base.6,hair.base.7,hair.base.8")')!= env.t('unlockSet5') + ' <span class="Pet_Currency_Gem1x inline-gems"/>'
               button(class='head_0 customize-option', type='button', ng-click='set({"preferences.hair.base":0})')
               each v,k in {1:true,2:false,3:true,4:false,5:false,6:false,7:false,8:false}
                 case v
                   when true:  button(class='hair_base_#{k}_{{user.preferences.hair.color}} customize-option', type='button', ng-click='set({"preferences.hair.base":#{k}})')
                   when false: button(class='hair_base_#{k}_{{user.preferences.hair.color}} customize-option', type='button', ng-class='{locked: !user.purchased.hair.base.#{k}}', ng-click='unlock("hair.base.#{k}")')
 
-          button.btn.btn-sm.btn-primary(ng-hide='user.purchased.hair.base.2 && user.purchased.hair.base.4 && user.purchased.hair.base.5 && user.purchased.hair.base.6 && user.purchased.hair.base.7 && user.purchased.hair.base.8', ng-click='unlock("hair.base.2,hair.base.4,hair.base.5,hair.base.6,hair.base.7,hair.base.8")')!= env.t('unlockSet5') + ' <span class="Pet_Currency_Gem1x inline-gems"/>'
-
           // Flower
           li.customize-menu
-            menu(label="Flower")
+            menu(label=env.t('flower'))
               button(class='head_0 customize-option', type='button', ng-click='set({"preferences.hair.flower":0})')
               each num in [1,2,3,4,5,6]
                 button(class='hair_flower_#{num} customize-option', type='button', ng-click='set({"preferences.hair.flower":#{num}})')
 
-          h5=env.t('bodyFacialHair')
-
-          // Beard
           li.customize-menu
+            h5=env.t('bodyFacialHair')
+
+            +twoGem()
+              button.btn.btn-xs(ng-hide='user.purchased.hair.mustache.1 && user.purchased.hair.mustache.2 && user.purchased.hair.beard.1 && user.purchased.hair.beard.2 && user.purchased.hair.beard.3', ng-click='unlock("hair.mustache.1,hair.mustache.2,hair.beard.1,hair.beard.2,hair.beard.3")')!= env.t('unlockSet5') + ' <span class="Pet_Currency_Gem1x inline-gems"/>'
+
+            // Beard
             menu(label=env.t('beard'))
-              +twoGem()
               button(class='head_0 customize-option', type='button', ng-click='set({"preferences.hair.beard":0})')
               each num in [1,2,3]
                 button(class='hair_beard_#{num}_{{user.preferences.hair.color}} customize-option', type='button', ng-class='{locked: !user.purchased.hair.beard.#{num}}', ng-click='unlock("hair.beard.#{num}")')
 
-          // Mustache
-          li.customize-menu
+            // Mustache
             menu(label=env.t('mustache'))
-              +twoGem()
               button(class='head_0 customize-option', type='button', ng-click='set({"preferences.hair.mustache":0})')
               each num in [1,2]
                 button(class='hair_mustache_#{num}_{{user.preferences.hair.color}} customize-option', type='button', ng-class='{locked: !user.purchased.hair.mustache.#{num}}', ng-click='unlock("hair.mustache.#{num}")')
 
-          button.btn.btn-sm.btn-primary(ng-hide='user.purchased.hair.mustache.1 && user.purchased.hair.mustache.2 && user.purchased.hair.beard.1 && user.purchased.hair.beard.2 && user.purchased.hair.beard.3', ng-click='unlock("hair.mustache.1,hair.mustache.2,hair.beard.1,hair.beard.2,hair.beard.3")')!= env.t('unlockSet5') + ' <span class="Pet_Currency_Gem1x inline-gems"/>'
-
     .col-md-4
-        h3=env.t('bodySkin')
+        h3(class=mobile?'item item-divider':'')=env.t('bodySkin')
         // skin
         li.customize-menu
           menu(label=env.t('basicSkins'))
@@ -107,13 +109,11 @@ script(id='partials/options.profile.avatar.html', type='text/ng-template')
               button.customize-option(type='button', class='skin_#{color}', ng-click='set({"preferences.skin":"#{color}"})')
 
           // Rainbow Skin
-          h5=env.t('rainbowSkins')
-          +twoGem()
-          //menu(label='Rainbow Skins (2G / skin)')
-          menu
+          menu(label=env.t('rainbowSkins'))
+            +twoGem()
+              button.btn.btn-xs(ng-hide='user.purchased.skin.eb052b && user.purchased.skin.f69922 && user.purchased.skin.f5d70f && user.purchased.skin.0ff591 && user.purchased.skin.2b43f6 && user.purchased.skin.d7a9f7 && user.purchased.skin.800ed0 && user.purchased.skin.rainbow', ng-click='unlock("skin.eb052b,skin.f69922,skin.f5d70f,skin.0ff591,skin.2b43f6,skin.d7a9f7,skin.800ed0,skin.rainbow")')!= env.t('unlockSet5') + ' <span class="Pet_Currency_Gem1x inline-gems"/>'
             each color in ['eb052b','f69922','f5d70f','0ff591','2b43f6','d7a9f7','800ed0','rainbow']
               button.customize-option(type='button', class='skin_#{color}', ng-class='{locked: !user.purchased.skin.#{color}}', ng-click='unlock("skin.#{color}")')
-          button.btn.btn-sm.btn-primary(ng-hide='user.purchased.skin.eb052b && user.purchased.skin.f69922 && user.purchased.skin.f5d70f && user.purchased.skin.0ff591 && user.purchased.skin.2b43f6 && user.purchased.skin.d7a9f7 && user.purchased.skin.800ed0 && user.purchased.skin.rainbow', ng-click='unlock("skin.eb052b,skin.f69922,skin.f5d70f,skin.0ff591,skin.2b43f6,skin.d7a9f7,skin.800ed0,skin.rainbow")')!= env.t('unlockSet5') + ' <span class="Pet_Currency_Gem1x inline-gems"/>'
 
           // Special Events
           // restore to d4df481 to see purchasing + "limited edition" code
@@ -123,69 +123,77 @@ script(id='partials/options.profile.avatar.html', type='text/ng-template')
               each color in ['monster','pumpkin','skeleton','zombie','ghost','shadow']
                 button.customize-option(type='button', class='skin_#{color}', ng-if='user.purchased.skin.#{color}', ng-click='unlock("skin.#{color}")')
 
-script(id='partials/options.profile.stats.html', type='text/ng-template')
+script(id='partials/options.profile.avatar.html', type='text/ng-template')
+  +customizeProfile()
+
+mixin profileStats
   .container-fluid
-    .row
+    div(class=mobile?'padding':'row')
+      // FIXME, get this working on mobile
       .border-right(ng-class='user.flags.classSelected && !user.preferences.disableClasses ? "col-md-4" : "col-md-6"')
         include ../shared/profiles/stats
-      .col-md-4.border-right.allocate-stats(ng-if='user.flags.classSelected && !user.preferences.disableClasses')
-        h3=env.t('characterBuild')
-        h4
-          =env.t('class') + ': '
-          span {{ {warrior:'Warrior',wizard:'Mage',healer:'Healer',rogue:'Rogue'}[user.stats.class] }}&nbsp;
-          a.btn.btn-danger.btn-xs(ng-click='changeClass(null)')=env.t('changeClass')
-          small.cost 3 <span class="Pet_Currency_Gem1x inline-gems"/>
-        table.table.table-striped
-          tr
-            td
-              strong.inline
-                {{user.stats.points}}&nbsp;
-              strong.hint(popover-trigger='mouseenter', popover-placement='right', popover=env.t('levelPopover'))=env.t('unallocated')
-            td
-          tr
-            td(colspan=2)
-              fieldset.auto-allocate
-                .checkbox
-                  label
-                    input(type='checkbox', ng-model='user.preferences.automaticAllocation', ng-change='set({"preferences.automaticAllocation": user.preferences.automaticAllocation?true: false})', ng-click='set({"preferences.allocationMode":"taskbased"})')
-                    span.hint(popover-trigger='mouseenter', popover-placement='right', popover=env.t('autoAllocationPop'))=env.t('autoAllocation')
-                form(ng-show='user.preferences.automaticAllocation',style='margin-left:1em')
-                  .radio
+      unless mobile
+        .col-md-4.border-right.allocate-stats(ng-if='user.flags.classSelected && !user.preferences.disableClasses')
+          h3=env.t('characterBuild')
+          h4
+            =env.t('class') + ': '
+            span {{ {warrior:env.t("warrior"), wizard:env.t("mage"), rogue:env.t("rogue"), healer:env.t("healer")}[user.stats.class] }}&nbsp;
+            a.btn.btn-danger.btn-xs(ng-click='changeClass(null)')=env.t('changeClass')
+            small.cost 3 <span class="Pet_Currency_Gem1x inline-gems"/>
+          table.table.table-striped
+            tr
+              td
+                strong.inline
+                  {{user.stats.points}}&nbsp;
+                strong.hint(popover-trigger='mouseenter', popover-placement='right', popover=env.t('levelPopover'))=env.t('unallocated')
+              td
+            tr
+              td(colspan=2)
+                fieldset.auto-allocate
+                  .checkbox
                     label
-                      input(type='radio', name='allocationMode', value='flat', ng-model='user.preferences.allocationMode', ng-change='set({"preferences.allocationMode": "flat"})')
-                      span.hint(popover-trigger='mouseenter', popover-placement='right', popover=env.t('evenAllocationPop'))=env.t('evenAllocation')
-                  .radio
-                    label
-                      input(type='radio', name='allocationMode', value='classbased', ng-model='user.preferences.allocationMode', ng-change='set({"preferences.allocationMode": "classbased"})')
-                      span.hint(popover-trigger='mouseenter', popover-placement='right', popover=env.t('classAllocationPop'))=env.t('classAllocation')
-                  .radio
-                    label
-                      input(type='radio', name='allocationMode', value='taskbased', ng-model='user.preferences.allocationMode', ng-change='set({"preferences.allocationMode": "taskbased"})')
-                      span.hint(popover-trigger='mouseenter', popover-placement='right', popover=env.t('taskAllocationPop'))=env.t('taskAllocation')
-                div(ng-show='user.preferences.automaticAllocation && !(user.preferences.allocationMode === "taskbased") && (user.stats.points > 0)')
-                  a.btn.btn-primary.btn-xs(ng-click='user.ops.allocateNow({})', popover-trigger='mouseenter', popover-placement='right', popover=env.t('distributePointsPop'))
-                    span.glyphicon.glyphicon-download
-                    &nbsp;
-                    =env.t('distributePoints')
-          tr
-            td= env.t('allocateCon') + ' {{user.stats.con}}'
-            td
-              a.btn.btn-primary(ng-show='user.stats.points', ng-click='allocate("con")', popover-trigger='mouseenter', popover-placement='right', popover=env.t('allocateConPop')) +
-           tr
-            td= env.t('allocateInt') + ' {{user.stats.int}}'
-            td
-              a.btn.btn-primary(ng-show='user.stats.points', ng-click='allocate("int")', popover-trigger='mouseenter', popover-placement='right', popover=env.t('allocateIntPop')) +
-          tr
-            td= env.t('allocatePer') + ' {{user.stats.per}}'
-            td
-              a.btn.btn-primary(ng-show='user.stats.points', ng-click='allocate("per")', popover-trigger='mouseenter', popover-placement='right', popover=env.t('allocatePerPop')) +
-          tr
-            td= env.t('allocateStr') + ' {{user.stats.str}}'
-            td
-              a.btn.btn-primary(ng-show='user.stats.points', ng-click='allocate("str")', popover-trigger='mouseenter', popover-placement='right', popover=env.t('allocateStrPop')) +
+                      input(type='checkbox', ng-model='user.preferences.automaticAllocation', ng-change='set({"preferences.automaticAllocation": user.preferences.automaticAllocation?true: false})', ng-click='set({"preferences.allocationMode":"taskbased"})')
+                      span.hint(popover-trigger='mouseenter', popover-placement='right', popover=env.t('autoAllocationPop'))=env.t('autoAllocation')
+                  form(ng-show='user.preferences.automaticAllocation',style='margin-left:1em')
+                    .radio
+                      label
+                        input(type='radio', name='allocationMode', value='flat', ng-model='user.preferences.allocationMode', ng-change='set({"preferences.allocationMode": "flat"})')
+                        span.hint(popover-trigger='mouseenter', popover-placement='right', popover=env.t('evenAllocationPop'))=env.t('evenAllocation')
+                    .radio
+                      label
+                        input(type='radio', name='allocationMode', value='classbased', ng-model='user.preferences.allocationMode', ng-change='set({"preferences.allocationMode": "classbased"})')
+                        span.hint(popover-trigger='mouseenter', popover-placement='right', popover=env.t('classAllocationPop'))=env.t('classAllocation')
+                    .radio
+                      label
+                        input(type='radio', name='allocationMode', value='taskbased', ng-model='user.preferences.allocationMode', ng-change='set({"preferences.allocationMode": "taskbased"})')
+                        span.hint(popover-trigger='mouseenter', popover-placement='right', popover=env.t('taskAllocationPop'))=env.t('taskAllocation')
+                  div(ng-show='user.preferences.automaticAllocation && !(user.preferences.allocationMode === "taskbased") && (user.stats.points > 0)')
+                    a.btn.btn-primary.btn-xs(ng-click='user.ops.allocateNow({})', popover-trigger='mouseenter', popover-placement='right', popover=env.t('distributePointsPop'))
+                      span.glyphicon.glyphicon-download
+                      &nbsp;
+                      =env.t('distributePoints')
+            tr
+              td= env.t('allocateCon') + ' {{user.stats.con}}'
+              td
+                a.btn.btn-primary(ng-show='user.stats.points', ng-click='allocate("con")', popover-trigger='mouseenter', popover-placement='right', popover=env.t('allocateConPop')) +
+             tr
+              td= env.t('allocateInt') + ' {{user.stats.int}}'
+              td
+                a.btn.btn-primary(ng-show='user.stats.points', ng-click='allocate("int")', popover-trigger='mouseenter', popover-placement='right', popover=env.t('allocateIntPop')) +
+            tr
+              td= env.t('allocatePer') + ' {{user.stats.per}}'
+              td
+                a.btn.btn-primary(ng-show='user.stats.points', ng-click='allocate("per")', popover-trigger='mouseenter', popover-placement='right', popover=env.t('allocatePerPop')) +
+            tr
+              td= env.t('allocateStr') + ' {{user.stats.str}}'
+              td
+                a.btn.btn-primary(ng-show='user.stats.points', ng-click='allocate("str")', popover-trigger='mouseenter', popover-placement='right', popover=env.t('allocateStrPop')) +
            
       div(ng-class='user.flags.classSelected && !user.preferences.disableClasses ? "col-md-4" : "col-md-6"')
         include ../shared/profiles/achievements
+
+script(id='partials/options.profile.stats.html', type='text/ng-template')
+  +profileStats()
 
 script(id='partials/options.profile.profile.html', type='text/ng-template')
   .container-fluid

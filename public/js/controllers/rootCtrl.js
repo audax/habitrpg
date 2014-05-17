@@ -121,7 +121,7 @@ habitrpg.controller("RootCtrl", ['$scope', '$rootScope', '$location', 'User', '$
       });
     }
 
-    $scope.cancelSubscription = function(){
+    $rootScope.cancelSubscription = function(){
       if (!confirm(window.env.t('sureCancelSub'))) return;
       window.location.href = '/' + user.purchased.plan.paymentMethod.toLowerCase() + '/subscribe/cancel?_id=' + user._id + '&apiToken=' + user.apiToken;
     }
@@ -204,11 +204,11 @@ habitrpg.controller("RootCtrl", ['$scope', '$rootScope', '$location', 'User', '$
 
       $http.post('/api/v2/user/class/cast/'+spell.key+'?targetType='+type+'&targetId='+targetId)
       .success(function(){
-        var msg = window.env.t('youCast', {spell: spell.text}); 
+        var msg = window.env.t('youCast', {spell: spell.text()}); 
         switch (type) {
-         case 'task': msg = window.env.t('youCastTarget', {spell: spell.text, target: target.text});break;
-         case 'user': msg = window.env.t('youCastTarget', {spell: spell.text, target: target.profile.name});break;
-         case 'party': msg = window.env.t('youCastParty', {spell: spell.text});break;
+         case 'task': msg = window.env.t('youCastTarget', {spell: spell.text(), target: target.text});break;
+         case 'user': msg = window.env.t('youCastTarget', {spell: spell.text(), target: target.profile.name});break;
+         case 'party': msg = window.env.t('youCastParty', {spell: spell.text()});break;
         }
         Notification.text(msg);
       });

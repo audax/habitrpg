@@ -58,7 +58,9 @@ angular.module("notificationServices", [])
         notify(sign(val) + " " + coins(val - bonus), 'gp');
       },
       text: function(val){
-        notify(val, 'info');
+        if (val) {
+          notify(val, 'info');
+        }
       },
       lvl: function(){
         notify(window.env.t('levelUp'), 'lvl', 'glyphicon glyphicon-chevron-up');
@@ -71,6 +73,9 @@ angular.module("notificationServices", [])
       },
       crit: function(val) {
         notify(window.env.t('critBonus') + Math.round(val) + "%", 'crit', 'glyphicon glyphicon-certificate');
+      },
+      streak: function(val) {
+        notify(window.env.t('streakName') + ': ' + val, 'streak', 'glyphicon glyphicon-repeat');
       },
       drop: function(val) {
         notify(val, 'drop', 'glyphicon glyphicon-gift');
