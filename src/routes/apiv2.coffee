@@ -350,7 +350,7 @@ module.exports = (swagger, v2) ->
     "/groups:GET":
       spec:
         path: '/groups'
-        description: "Get a list of groups"
+        description: "Get a list of groups. The *guilds* type lets you retrieve data about all the guilds you are subscribed to."
         parameters: [
           query 'type',"Comma-separated types of groups to return, eg 'party,guilds,public,tavern'",'string'
         ]
