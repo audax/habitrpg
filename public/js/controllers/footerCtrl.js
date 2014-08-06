@@ -4,6 +4,17 @@
   .controller("FooterCtrl", ['$scope', '$rootScope', 'User', '$http', 'Notification', 'API_URL',
   function($scope, $rootScope, User, $http, Notification, API_URL) {
 
+    if(typeof habitrpg === "undefined"){
+      $scope.languages = env.avalaibleLanguages;
+      $scope.selectedLanguage = _.find(env.avalaibleLanguages, {code: env.language.code});
+
+      $rootScope.selectedLanguage = $scope.selectedLanguage;
+      
+      $scope.changeLang = function(){
+        window.location = '?lang='+$scope.selectedLanguage.code;
+      }
+    }
+
     /**
      External Scripts
      JS files not needed right away (google charts) or entirely optional (analytics)
@@ -42,7 +53,7 @@
     /**
      * Debug functions. Note that the server route for gems is only available if process.env.DEBUG=true
      */
-    if (window.env.NODE_ENV === 'development') {
+    if (_.contains(['development','test'],window.env.NODE_ENV)) {
       $scope.addMissedDay = function(){
         if (!confirm("Are you sure you want to reset the day?")) return;
         var dayBefore = moment(User.user.lastCron).subtract('days', 1).toDate();

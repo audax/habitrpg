@@ -2,10 +2,25 @@ var _id = '';
 var update = {
   $push: {
     'purchased.plan.mysteryItems':{
-      $each:['back_mystery_201404','headAccessory_mystery_201404']
+      $each:['head_mystery_201407','armor_mystery_201407']
     }
   }
 };
+
+/*var update = {
+  $set:{
+    'purchased.plan':{
+      customerId: "",
+      dateCreated: new Date(),
+      dateTerminated: null,
+      dateUpdated:new Date(),
+      gemsBought: 0,
+      mysteryItems: [],
+      paymentMethod: "Paypal",
+      planId : "basic_earned"
+    }
+  }
+};*/
 
 if (_id) {
   // singular (missing items)

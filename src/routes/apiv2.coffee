@@ -46,6 +46,10 @@ module.exports = (swagger, v2) ->
         ]
       action: user.getContent
 
+    '/content/paths':
+      spec:
+        description: "Show user model tree"
+      action: user.getModelPaths
 
     "/export/history":
       spec:
@@ -63,7 +67,7 @@ module.exports = (swagger, v2) ->
     "/user/tasks/{id}/{direction}":
       spec:
         #notes: "Simple scoring of a task."
-        description: "Simple scoring of a task. This is most-likely the only API route you'll be using as a 3rd-party developer. The most common operation is for the user to gain or lose points based on some action (browsing Reddit, running a mile, 1 Pomodor, etc). Call this route, if the task you're trying to score doesn't exist, it will be created for you."
+        description: "Simple scoring of a task. This is most-likely the only API route you'll be using as a 3rd-party developer. The most common operation is for the user to gain or lose points based on some action (browsing Reddit, running a mile, 1 Pomodor, etc). Call this route, if the task you're trying to score doesn't exist, it will be created for you. When random events occur, the <b>user._tmp</b> variable will be filled. Critical hits can be accessed through <b>user._tmp.crit</b>. The Streakbonus can be accessed through <b>user._tmp.streakBonus</b>. Both will contain the multiplier value. When random drops occur, the following values are available: <b>user._tmp.drop = {text,type,dialog,value,key,notes}</b>"
         parameters: [
           path("id", "ID of the task to score. If this task doesn't exist, a task will be created automatically", "string")
           path("direction", "Either 'up' or 'down'", "string")
@@ -162,7 +166,7 @@ module.exports = (swagger, v2) ->
         description: "Sell inventory items back to Alexander"
         parameters: [
           #TODO verify these are the correct types
-          path('type',"The type of object you're selling back.",'string',['gear','eggs','hatchingPotions','food'])
+          path('type',"The type of object you're selling back.",'string',['eggs','hatchingPotions','food'])
           path('key',"The object key you're selling back (call /content route for available keys)",'string')
         ]
       action: user.sell
@@ -172,7 +176,7 @@ module.exports = (swagger, v2) ->
         method: 'POST'
         description: "Purchase a gem-purchaseable item from Alexander"
         parameters:[
-          path('type',"The type of object you're purchasing.",'string',['gear','eggs','hatchingPotions','food'])
+          path('type',"The type of object you're purchasing.",'string',['eggs','hatchingPotions','food','quests','special'])
           path('key',"The object key you're purchasing (call /content route for available keys)",'string')
         ]
       action: user.purchase
@@ -191,9 +195,9 @@ module.exports = (swagger, v2) ->
     "/user/inventory/equip/{type}/{key}":
       spec:
         method: 'POST'
-        description: "Equip an item (either pets, mounts, or gear)"
+        description: "Equip an item (either pet, mount, equipped or costume)"
         parameters: [
-          path 'type',"Type to equip",'string',['pets','mounts','gear']
+          path 'type',"Type to equip",'string',['pet','mount','equipped', 'costume']
           path 'key',"The object key you're equipping (call /content route for available keys)",'string'
         ]
       action: user.equip
@@ -372,7 +376,7 @@ module.exports = (swagger, v2) ->
     "/groups/{gid}:GET":
       spec:
         path: '/groups/{gid}'
-        description: "Get a group"
+        description: "Get a group. The party the user currently is in can be accessed with the gid 'party'."
         parameters: [path('gid','Group ID','string')]
       middleware: [auth.auth, i18n.getUserLanguage]
       action: groups.get
@@ -489,8 +493,11 @@ module.exports = (swagger, v2) ->
     "/groups/{gid}/chat/{messageId}":
       spec:
         method: 'DELETE'
-        description: 'Delete a group'
-        parameters: [path('gid','ID of group to delete','string')]
+        description: 'Delete a chat message in a given group'
+        parameters: [
+          path 'gid', 'ID of the group containing the message to be deleted', 'string'
+          path 'messageId', 'ID of message to be deleted', 'string'
+        ]
       middleware: [auth.auth, i18n.getUserLanguage, groups.attachGroup]
       action: groups.deleteChatMessage
 

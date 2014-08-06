@@ -1,3 +1,16 @@
+// Clearfix (http://css-tricks.com/snippets/css/clear-fix/)
+$clearfix
+  &:after
+    content: ""
+    display: table
+    clear: both
+// Text shadow mixin
+hrpg-text-shadow-mixin($hrpg-text-shadow-base-color)
+    text-shadow:
+     -1px -1px 1px darken($hrpg-text-shadow-base-color,70%),  
+      1px -1px 1px darken($hrpg-text-shadow-base-color,70%),
+      -1px 1px 1px darken($hrpg-text-shadow-base-color,70%),
+       1px 1px 1px darken($hrpg-text-shadow-base-color,70%);
 // Buttons
 // The !important declarations override Bootstrap
 hrpg-button-color-mixin($hrpg-button-color)
@@ -55,7 +68,7 @@ $hrpg-button-master
         background-color: #eee !important
 $hrpg-button
   @extend $hrpg-button-master
-  > a, > button
+  > a, > button, > input
     border: 1px solid #ccc !important
     border-radius: 0.382em !important
 $hrpg-button-call-to-action
@@ -94,7 +107,7 @@ $hrpg-button-with-input
     border-radius: 0em 0.382em 0.382em 0em
 //Button bar
 hrpg-button-bar-mixin($hrpg-button-bar-color)
-  border-color: darken($hrpg-button-bar-color, 16.18)
+  border-color: darken($hrpg-button-bar-color, 16.18%)
   li
     border-right-color: darken($hrpg-button-bar-color,3.82%)
   li:first-of-type
@@ -107,9 +120,10 @@ $hrpg-button-bar
   margin-bottom: 0.618em
   li
     border-right: 1px solid darken(#fff,3.82%)
+    float:left
   li:first-of-type
     color: darken(#fff,61.8%)
-    padding: 0.25em 0.5em
+    padding: 0.25em 0.618em
     border-radius: 0.382em 0em 0em 0.382em
     border-right: 1px solid darken(#fff,6.18%)
   li:last-of-type
@@ -118,19 +132,25 @@ $hrpg-button-bar
       border-radius: 0em 0.382em 0.382em 0em
 // Labels
 hrpg-label-color-mixin($hrpg-label-color)
-  color: lighten($hrpg-label-color, 90%) !important 
   background-color: $hrpg-label-color !important
-  border-color: darken($hrpg-label-color, 16.18%) !important
-  > a
-    color: lighten($hrpg-label-color, 90%) !important 
+  hrpg-text-shadow-mixin($hrpg-label-color)
 $hrpg-label
   padding: 0.382em 0.618em
-  border-width: 1px
-  border-style: solid
-  border-radius: 0.382em
+  border: 1px solid #fff
+  outline: 1px solid #999
+  background-color: #999
   font-size: 0.8em
   line-height: 1
+  font-weight: bold
+  letter-spacing: 0.0618em;
   color: #fff
+  > a
+    color: #fff
+  text-shadow:
+   -1px -1px 1px #333,  
+    1px -1px 1px #333,
+    -1px 1px 1px #333,
+     1px 1px 1px #333;
 // Modals
 $hrpg-modal
   position: relative
@@ -238,19 +258,18 @@ $hrpg-submenu
 // Tags
 hrpg-tag-color-mixin($hrpg-tag-color)
   background-color: darken($hrpg-tag-color,3.82%)
+  > a, > a span
+    color: darken($hrpg-tag-color,61.8%)
+    &:before
+      border-right-color: darken($hrpg-tag-color,3.82%)
   &.active
     > a, > a span
       color: darken($hrpg-tag-color,3.82%)
       background-color: darken($hrpg-tag-color,32.8%)
       &:before
         border-right-color: darken($hrpg-tag-color,32.8%)
-  > a, > a span
-    color: darken($hrpg-tag-color,61.8%)
-    &:before
-      border-right-color: darken($hrpg-tag-color,3.82%)
   @media screen and (min-width:768px)
     &:hover, &:hover > a, &:hover > a span
-      //color: darken($hrpg-tag-color,3.82%)
       background-color: darken($hrpg-tag-color,16.8%)
     &:hover > a:before
       border-right-color: darken($hrpg-tag-color,16.18%)
@@ -263,6 +282,7 @@ hrpg-tag-color-mixin($hrpg-tag-color)
 $hrpg-tag-master
   display: inline-block
   position: relative
+  left: -1em
   width: auto
   margin-left: 1.618em
   &.active > a

@@ -1,8 +1,8 @@
 'use strict';
 
 habitrpg.controller('NotificationCtrl',
-  ['$scope', '$rootScope', 'Shared', 'User', 'Guide', 'Notification',
-  function ($scope, $rootScope, Shared, User, Guide, Notification) {
+  ['$scope', '$rootScope', 'Shared', 'Content', 'User', 'Guide', 'Notification',
+  function ($scope, $rootScope, Shared, Content, User, Guide, Notification) {
 
     $rootScope.$watch('user.stats.hp', function(after, before) {
       if (after <= 0){
@@ -62,7 +62,23 @@ habitrpg.controller('NotificationCtrl',
         }
         User.user.items[type][after.key]++;
       }
-      Notification.drop(User.user._tmp.drop.dialog);
+
+      if(after.type === 'HatchingPotion'){
+        var text = Content.hatchingPotions[after.key].text();
+        var notes = Content.hatchingPotions[after.key].notes();
+        Notification.drop(env.t('messageDropPotion', {dropText: text, dropNotes: notes}));
+      }else if(after.type === 'Egg'){
+        var text = Content.eggs[after.key].text();
+        var notes = Content.eggs[after.key].notes();
+        Notification.after(env.t('messageDropEgg', {dropText: text, dropNotes: notes}));
+      }else if(after.type === 'Food'){
+        var text = Content.food[after.key].text();
+        var notes = Content.food[after.key].notes();
+        Notification.after(env.t('messageDropFood', {dropArticle: after.article, dropText: text, dropNotes: notes}));
+      }else{
+        // Keep support for another type of drops that might be added
+        Notification.drop(User.user._tmp.drop.dialog);
+      }
     });
 
     $rootScope.$watch('user.achievements.streak', function(after, before){
@@ -126,7 +142,7 @@ habitrpg.controller('NotificationCtrl',
 
     // Completed quest modal
     $rootScope.$watch('user.party.quest.completed', function(after, before){
-      if (after == before || after != true) return;
+      if (!after) return;
       $rootScope.openModal('questCompleted', {controller:'InventoryCtrl'});
     });
 

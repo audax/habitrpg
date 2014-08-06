@@ -5,19 +5,22 @@ var fs = require('fs'),
     shared = require('habitrpg-shared'),
     translations = {};
 
+var localePath = path.join(__dirname, "/../node_modules/habitrpg-shared/locales/")
+
 var loadTranslations = function(locale){
-  var files = fs.readdirSync(path.join(__dirname, "/../node_modules/habitrpg-shared/locales/", locale));
+  var files = fs.readdirSync(path.join(localePath, locale));
   translations[locale] = {};
   _.each(files, function(file){
-    _.merge(translations[locale], require(path.join(__dirname, "/../node_modules/habitrpg-shared/locales/", locale, file)));
+    if(path.extname(file) !== '.json') return;
+    _.merge(translations[locale], require(path.join(localePath, locale, file)));
   });
 };
 
 // First fetch english so we can merge with missing strings in other languages
 loadTranslations('en');
 
-fs.readdirSync(path.join(__dirname, "/../node_modules/habitrpg-shared/locales/")).forEach(function(file) {
-  if(file === 'en' || file === 'README.md') return;
+fs.readdirSync(localePath).forEach(function(file) {
+  if(file === 'en' || fs.statSync(path.join(localePath, file)).isDirectory() === false) return;
   loadTranslations(file);
   // Merge missing strings from english
   _.defaults(translations[file], translations.en);
@@ -38,6 +41,7 @@ var momentLangs = {};
 // Handle different language codes from MomentJS and /locales
 var momentLangsMapping = {
   'en': 'en-gb',
+  'en_GB': 'en-gb',
   'no': 'nn'
 };
 
@@ -53,12 +57,16 @@ _.each(langCodes, function(code){
   }catch (e){}
 });
 
+// Remove en_GB from langCodes checked by browser to avaoi it being 
+// used in place of plain original 'en'
+var defaultLangCodes = _.without(langCodes, 'en_GB');
+
 var getUserLanguage = function(req, res, next){
   var getFromBrowser = function(){
     var acceptable = _(req.acceptedLanguages).map(function(lang){
       return lang.slice(0, 2);
     }).uniq().value();
-    var matches = _.intersection(acceptable, langCodes);
+    var matches = _.intersection(acceptable, defaultLangCodes);
     return matches.length > 0 ? matches[0] : 'en';
   };
 
@@ -74,7 +82,10 @@ var getUserLanguage = function(req, res, next){
     next();
   };
 
-  if(req.locals && req.locals.user){
+  if(req.query.lang){
+    req.language = translations[req.query.lang] ? (req.query.lang) : 'en';
+    next();
+  }else if(req.locals && req.locals.user){
     getFromUser(req.locals.user);
   }else if(req.session && req.session.userId){
     User.findOne({_id: req.session.userId}, function(err, user){

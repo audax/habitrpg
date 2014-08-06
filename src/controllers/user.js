@@ -29,6 +29,13 @@ api.getContent = function(req, res, next) {
   res.json(content);
 }
 
+api.getModelPaths = function(req,res,next){
+  res.json(_.reduce(User.schema.paths,function(m,v,k){
+    m[k] = v.instance || 'Boolean';
+    return m;
+  },{}));
+}
+
 /*
   ------------------------------------------------------------------------
   Tasks
@@ -226,8 +233,10 @@ api.cron = function(req, res, next) {
     ranCron = user.isModified(),
     quest = shared.content.quests[user.party.quest.key];
 
+
   if (ranCron) res.locals.wasModified = true;
   if (!ranCron) return next(null,user);
+  Group.tavernBoss(user,progress);
   if (!quest) return user.save(next);
 
   // If user is on a quest, roll for boss & player, or handle collections
@@ -256,7 +265,8 @@ api.cron = function(req, res, next) {
 // api.reset // Shared.ops
 
 api['delete'] = function(req, res, next) {
-  if (res.locals.user.purchased.plan.customerId)
+  var plan = res.locals.user.purchased.plan;
+  if (plan && plan.customerId && !plan.dateTerminated)
     return res.json(400,{err:"You have an active subscription, cancel your plan before deleting your account."});
   res.locals.user.remove(function(err){
     if (err) return next(err);
@@ -302,6 +312,7 @@ api.cast = function(req, res, next) {
   var klass = shared.content.spells.special[req.params.spell] ? 'special' : user.stats.class
   var spell = shared.content.spells[klass][req.params.spell];
   if (!spell) return res.json(404, {err: 'Spell "' + req.params.spell + '" not found.'});
+  if (spell.mana > user.stats.mp) return res.json(400, {err: 'Not enough mana to cast spell'});
 
   var done = function(){
     var err = arguments[0];

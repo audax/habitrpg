@@ -46,6 +46,7 @@ var UserSchema = new Schema({
     valentine: Number
   },
   auth: {
+    blocked: Boolean,
     facebook: Schema.Types.Mixed,
     local: {
       email: String,
@@ -82,6 +83,7 @@ var UserSchema = new Schema({
     skin: {type: Schema.Types.Mixed, 'default': {}}, // eg, {skeleton: true, pumpkin: true, eb052b: true}
     hair: {type: Schema.Types.Mixed, 'default': {}},
     shirt: {type: Schema.Types.Mixed, 'default': {}},
+    background: {type: Schema.Types.Mixed, 'default': {}},
     txnCount: {type: Number, 'default':0},
     mobileChat: Boolean,
     plan: {
@@ -136,7 +138,8 @@ var UserSchema = new Schema({
         head: {type: String, 'default': 'head_base_0'},
         shield: {type: String, 'default': 'shield_base_0'},
         back: String,
-        headAccessory: String
+        headAccessory: String,
+        body: String
       },
       costume: {
         weapon: {type: String, 'default': 'weapon_base_0'},
@@ -144,7 +147,8 @@ var UserSchema = new Schema({
         head: {type: String, 'default': 'head_base_0'},
         shield: {type: String, 'default': 'shield_base_0'},
         back: String,
-        headAccessory: String
+        headAccessory: String,
+        body: String
       },
     },
 
@@ -201,10 +205,7 @@ var UserSchema = new Schema({
       // Then add quest pets
       _.transform(shared.content.questPets, function(m,v,k){ m[k] = Boolean; }),
       // Then add additional pets (backer, contributor)
-      {
-        'LionCub-Ethereal': Boolean,
-        'BearCub-Polar': Boolean
-      }
+      _.transform(shared.content.specialMounts, function(m,v,k){ m[k] = Boolean; })
     ),
     currentMount: String,
 
@@ -241,18 +242,18 @@ var UserSchema = new Schema({
   preferences: {
     armorSet: String,
     dayStart: {type:Number, 'default': 0, min: 0, max: 23},
-    size: {type:String, enum: ['broad','slim'], 'default': 'broad'},
+    size: {type:String, enum: ['broad','slim'], 'default': 'slim'},
     hair: {
-      color: {type: String, 'default': 'blond'},
-      base: {type: Number, 'default': 0},
-      bangs: {type: Number, 'default': 0},
+      color: {type: String, 'default': 'red'},
+      base: {type: Number, 'default': 3},
+      bangs: {type: Number, 'default': 1},
       beard: {type: Number, 'default': 0},
       mustache: {type: Number, 'default': 0},
       flower: Number
     },
     hideHeader: {type:Boolean, 'default':false},
-    skin: {type:String, 'default':'c06534'},
-    shirt: {type: String, 'default': 'white'},
+    skin: {type:String, 'default':'915533'},
+    shirt: {type: String, 'default': 'blue'},
     timezoneOffset: Number,
     language: String,
     automaticAllocation: Boolean,
@@ -264,7 +265,8 @@ var UserSchema = new Schema({
     newTaskEdit: {type: Boolean, 'default': false},
     tagsCollapsed: {type: Boolean, 'default': false},
     advancedCollapsed: {type: Boolean, 'default': false},
-    toolbarCollapsed: {type:Boolean, 'default':false}
+    toolbarCollapsed: {type:Boolean, 'default':false},
+    background: String
   },
   profile: {
     blurb: String,
@@ -378,8 +380,6 @@ UserSchema.pre('save', function(next) {
         return newTask;
       });
     });
-
-    this.preferences.language = undefined;
   }
 
   //this.markModified('tasks');
@@ -404,6 +404,7 @@ UserSchema.pre('save', function(next) {
 
   //our own version incrementer
   this._v++;
+
   next();
 });
 
@@ -441,3 +442,11 @@ UserSchema.methods.unlink = function(options, cb) {
 
 module.exports.schema = UserSchema;
 module.exports.model = mongoose.model("User", UserSchema);
+
+mongoose.model("User").find({'contributor.admin':true},function(err,mods){
+  module.exports.mods = _.map(mods,function(m){
+    var lvl = (m.backer && m.backer.npc) ? 'label-npc' :
+        'label-contributor-' + m.contributor.level;
+    return ' <span class="label ' + lvl + '">'+ m.profile.name + '</span>'
+  });
+});

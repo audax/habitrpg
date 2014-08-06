@@ -3,12 +3,12 @@ form.chat-form(ng-submit='postChat(group,message.content)')
     textarea.form-control(rows=4, ui-keypress='{13:"postChat(group,message.content)"}', ng-model='message.content', updateinterval='250', flag='@', at-user, auto-complete)
     span.user-list(ng-show='!isAtListHidden')
       ul.list-at-user
-        li(bindonce='response', ng-repeat='user in response | filter:query.text | limitTo: 5', ng-click='autoComplete(user)')
-          span.username.label.label-default(ng-class='userLevelStyle(user)') {{user.user}}
-  .row
-    .col-md-9
+        li(ng-repeat='user in response | filter:query.text | limitTo: 5', ng-click='autoComplete(user)')
+          span.username.label.label-default(ng-class=':: userLevelStyle(user)') {{::user.user}}
+  .chat-controls
+    .chat-formatting
       include ../../shared/formatting-help
-    .col-md-3
-      input.btn.btn-default.chat-btn(type='submit', value=env.t('sendChat'), ng-class='{disabled: _sending == true}')
-      button.btn.btn-default(type="button", ng-click='sync(group)', tooltip=env.t('toolTipMsg'))
-        span.glyphicon.glyphicon-refresh.pull-right
+    .chat-buttons
+      input(type='submit', value=env.t('sendChat'), ng-class='{disabled: _sending == true}')
+      button(type="button", ng-click='sync(group)', tooltip=env.t('toolTipMsg'))
+        span.glyphicon.glyphicon-refresh

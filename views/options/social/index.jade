@@ -3,14 +3,15 @@
 
 include ./challenges.jade
 include ./hall.jade
+include ./boss.jade
 
 script(type='text/ng-template', id='partials/options.social.tavern.html')
   include ./tavern
 
 script(type='text/ng-template', id='partials/options.social.party.html')
-  div(ng-show='group._id')
+  div(ng-if='group._id')
     include ./group
-  div(ng-hide='group._id')
+  div(ng-if='!group._id')
     div(ng-show='user.invitations.party.id')
       h2=env.t('invitedTo', {name: '{{user.invitations.party.name}}'})
       a.btn.btn-success(data-type='party', ng-click='join(user.invitations.party)')=env.t('accept')
@@ -41,17 +42,17 @@ script(type='text/ng-template', id='partials/options.social.guilds.public.html')
     tr(ng-repeat='group in groups.public | filter:guildSearch')
       td
         ul.pull-right.challenge-accordion-header-specs
-          li='{{group.memberCount}} ' + env.t('members')
+          li='{{::group.memberCount}} ' + env.t('members')
+          // join / leave
           li
-            // join / leave
-            a.btn.btn-sm.btn-danger(ng-show='group._isMember', ng-click='clickLeave(group, $event)')
+            a.btn.btn-sm.btn-danger(ng-if="::group._isMember", ng-click='clickLeave(group, $event)')
               span.glyphicon.glyphicon-ban-circle
               =env.t('leave')
-            a.btn.btn-sm.btn-success(ng-hide='group._isMember', ng-click='join(group)')
+            a.btn.btn-sm.btn-success(ng-if="::!group._isMember", ng-click='join(group)')
               span.glyphicon.glyphicon-ok
               =env.t('join')
-        h4 {{group.name}}
-        p {{group.description}}
+        h4 {{::group.name}}
+        p {{::group.description}}
 
 script(type='text/ng-template', id='partials/options.social.guilds.detail.html')
   include ./group
