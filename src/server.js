@@ -25,7 +25,6 @@ if (cluster.isMaster && (isDev || isProd)) {
   var http = require("http");
   var path = require("path");
   var swagger = require("swagger-node-express");
-  var autoinc = require('mongoose-id-autoinc');
 
   // Setup translations
   var i18n = require('./i18n');
@@ -46,7 +45,6 @@ if (cluster.isMaster && (isDev || isProd)) {
     if (err) throw err;
     logging.info('Connected with Mongoose');
   });
-  autoinc.init(db);
 
   // load schemas & models
   require('./models/challenge');
