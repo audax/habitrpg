@@ -41,7 +41,7 @@ module.exports.setupConfig = function(){
   if (nconf.get('NODE_ENV') === "development")
     Error.stackTraceLimit = Infinity;
   if (nconf.get('NODE_ENV') === 'production')
-    require('newrelic');
+    // require('newrelic');
 
   module.exports.ga = require('universal-analytics')(nconf.get('GA_ID'));
 };
